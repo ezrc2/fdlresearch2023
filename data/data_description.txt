@@ -1,0 +1,33 @@
+Academics
+- general academic information
+- information about popular majors
+    - business
+    - social science and history
+    - computer science
+    - engineering
+    - biology
+    - pyschology
+    - visual and performing arts
+    - communication and journalism
+
+Alumni
+- famous alumni
+- post graduation results (like on LinkedIn)
+
+Campus
+- campus information
+- famous buildings
+- landmarks
+- school location and city
+
+History
+- history of the school
+- important dates and milestones
+
+Student life
+- student life
+- student organizations
+- student athletics and intramural sports
+- social clubs
+- student housing
+- greek life

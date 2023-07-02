@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<style>
+    h1 {
+        text-align: center;
+    }
+
+    body {
+        width: 100%;
+        max-width: 1200px;
+        border: 0px;
+        border-spacing: 0px;
+        border-collapse: separate;
+        margin-right: auto;
+        margin-left: auto;
+    }
+</style>
+
+<head>
+    <title>{{ name }} Wiki Page</title>
+</head>
+
+<body
+    style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">
+
+    <h1>{{ name }}</h1>
+    <p>
+        <b>Description</b>: {{wikidata_result.1}}
+        <br><br>
+        <b>Alternate names</b>: {{wikidata_result.2}}
+        <br><br>
+        <b>Twitter</b>: <a href="https://www.twitter.com/{{wikidata_result.3}}">{{wikidata_result.3}}</a> &emsp;&emsp;
+        <b>Instagram</b>: <a href="https://www.Instagram.com/{{wikidata_result.4}}/">{{wikidata_result.4}}</a>
+        <br><br>
+        <b>Subreddit</b>: <a href="https://www.reddit.com/r/{{wikidata_result.5}}">r/{{wikidata_result.5}}</a>
+        &emsp;&emsp;
+        <b>Website</b>: <a href="{{wikidata_result.6.0}}">{{wikidata_result.6.0}}</a>
+        <br><br>
+    </p>
+
+
+    <span style="display: inline; margin: 0 auto">
+        <img src="{{wikidata_result.7}}" height="50" alt="campus">
+        <img src="{{wikidata_result.8}}" height="100" alt="logo">
+        <br>
+    </span>
+
+    <br><br>
+
+    <u>Sections</u>
+    <ul>
+        <li><a href="#academics">Academics</a></li>
+        <li><a href="#alumni">Alumni</a></li>
+        <li><a href="#campus">Campus</a></li>
+        <li><a href="#history">History</a></li>
+        <li><a href="#studentlife">Student Life</a></li>
+    </ul>
+
+    <br>
+
+    <h2 id="academics">Academics</h2>
+    <ul>
+        {% if results.academics_overall %}
+        {{ results.academics_overall }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_business %}
+        {{ results.academics_business }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_socialsciencehistory %}
+        {{ results.academics_socialsciencehistory }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_computerscience %}
+        {{ results.academics_computerscience }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_engineering %}
+        {{ results.academics_engineering }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_biology %}
+        {{ results.academics_biology }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_psychology %}
+        {{ results.academics_psychology }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_visualperformingarts %}
+        {{ results.academics_visualperformingarts }}
+        {% endif %}
+        <br><br>
+        {% if results.academics_communicationjournalism %}
+        {{ results.academics_communicationjournalism }}
+        {% endif %}
+    </ul>
+
+    <h2 id="alumni">Alumni</h2>
+    <ul>
+        {% if results.alumni %}
+        {{ results.alumni }}
+        {% endif %}
+    </ul>
+
+    <h2 id="campus">Campus</h2>
+    <ul>
+        {% if results.campus_general %}
+        {{ results.campus_general }}
+        {% endif %}
+        <br><br>
+        {% if results.campus_famousbuildingslandmarks %}
+        {{ results.famousbuildingslandmarks }}
+        {% endif %}
+        <br><br>
+        {% if results.campus_locationcity %}
+        {{ results.campus_locationcity }}
+        {% endif %}
+    </ul>
+
+    <h2 id="history">History</h2>
+    <ul>
+        {% if results.history_general %}
+        {{ results.history_general }}
+        {% endif %}
+        <br><br>
+        {% if results.history_milestones %}
+        {{ results.history_milestones }}
+        {% endif %}
+    </ul>
+
+    <h2 id="studentlife">Student Life</h2>
+    <ul>
+        {% if results.studentlife_clubsorganizations %}
+        {{ results.studentlife_clubsorganizations }}
+        {% endif %}
+        <br><br>
+        {% if results.studentlife_athleticsintramurals %}
+        {{ results.studentlife_athleticsintramurals }}
+        {% endif %}
+        <br><br>
+        {% if results.studentlife_greeklife %}
+        {{ results.studentlife_greeklife }}
+        {% endif %}
+    </ul>
+</body>
+
+</html>

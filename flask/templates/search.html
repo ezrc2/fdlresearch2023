@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<style>
+    .search {
+        text-align: center;
+        clear: both;
+        margin: 5% 0 0 0;
+    }
+
+    .logo_image {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 5%;
+    }
+
+    .search_button {
+        height: 20px;
+    }
+</style>
+
+
+
+
+<head>
+    <title> University Wiki Search </title>
+</head>
+
+<body
+    style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">
+
+    <div class="search">
+        <h1> University Wiki </h1>
+
+        <img src="static/logo.png" alt="logo" class="logo_image">
+        <br><br>
+        <form action="/result" method="POST">
+            <input type="text" name="search_query" placeholder="Enter university name.." size="70"
+                style="font-size:14pt;">
+            <button type="submit" class="search_button"> Search </button>
+        </form>
+    </div>
+
+</body>
+
+</html>

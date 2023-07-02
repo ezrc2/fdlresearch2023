@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<style>
+    h1 {
+        text-align: center;
+    }
+
+    body {
+        width: 100%;
+        max-width: 800px;
+        border: 0px;
+        border-spacing: 0px;
+        border-collapse: separate;
+        margin-right: auto;
+        margin-left: auto;
+    }
+</style>
+
+<head>
+    <title>{{ name }} Wiki Page</title>
+</head>
+
+<body
+    style="font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif">
+
+    <h1>{{ name }}</h1>
+
+    Information on {{ name }} was not present in the database but has now been generated. Search again for results.
+
+    {% if msg1 %}
+    {{ msg1 }}
+    {% endif %}
+    {% if msg2 %}
+    {{ msg2}}
+    {% endif %}
+
+</body>
+
+</html>
