@@ -6,20 +6,31 @@ from trafilatura.settings import use_config
 from bs4 import BeautifulSoup
 from google_images_search import GoogleImagesSearch
 import urllib
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support import expected_conditions as EC
+import re
+from rake_nltk import Rake
+import spacy
+import pickle
 
 from keys import API_KEY, SEARCH_ENGINE_ID
 
 categories = ['academics', 'alumni', 'campus', 'history', 'studentlife']
-query_categories = ['academics_overall', 'academics_business', 'academics_socialsciencehistory', 'academics_computerscience', 'academics_engineering', 'academics_biology', 'academics_psychology', 'academics_visualperformingarts', 'academics_communicationjournalism', 
-                    'alumni', 
-                    'campus_general', 'campus_famousbuildingslandmarks', 'campus_locationcity', 
-                    'history_general', 'history_milestones', 
-                    'studentlife_clubsorganizations', 'studentlife_athleticsintramurals', 'studentlife_greeklife']
+possible_majors = ['accounting', 'agricultural science', 'anthropology', 'architecture', 'art', 'biology', 'business', 'chemistry', 'communications', 'computer science', 'criminal justice', 'culinary arts', 
+                   'dental studies', 'design', 'economics', 'education', 'engineering', 'english', 'environmental science', 'film', 'finance', 'foreign language', 'history', 'information science', 'kinesiology', 
+                   'law', 'math', 'music', 'nursing', 'nutrition', 'performing arts', 'pharmacy', 'philosophy', 'physics', 'political science', 'psychology', 'religion', 'sociology', 'statistics']
+
+nlp = spacy.load('en_core_web_md')
+def similarity(word1, word2):
+    token1 = nlp(word1)[0]
+    token2 = nlp(word2)[0]
+    return token1.similarity(token2)
 
 # Find the university's common name
 # For example, if 'NYU' is searched, this will return 'New York University'
-
-
 def find_university_name(search_name):
     url = 'https://api.ror.org/organizations?query='
     response = requests.get(url + search_name)
@@ -53,19 +64,19 @@ def find_university_name(search_name):
 #     return [campus_urls, logo_urls]  # has to pass by reference
 
 def get_urls_and_titles(query):
-        urls = []
-        titles = []
-        page = 1
-        start = (page - 1) * 10 + 1
-        url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={SEARCH_ENGINE_ID}&q={query}&start={start}"
-        data = requests.get(url).json()
-        search_items = data.get("items")
-        for search_item in search_items:
-            title = search_item.get("title")
-            link = search_item.get("link")
-            urls.append(link)
-            titles.append(title)
-        return [urls, titles]
+    urls = []
+    titles = []
+    page = 1
+    start = (page - 1) * 10 + 1
+    url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={SEARCH_ENGINE_ID}&q={query}&start={start}"
+    data = requests.get(url).json()
+    search_items = data.get("items")
+    for search_item in search_items:
+        title = search_item.get("title")
+        link = search_item.get("link")
+        urls.append(link)
+        titles.append(title)
+    return [urls, titles]
 
 def extract_paragraphs(url):
     try:    
@@ -87,18 +98,89 @@ def extract_paragraphs(url):
             paragraphs.append(text)
     return paragraphs
 
+def find_popular_majors(school_name):
+    service = Service()
+    options = webdriver.ChromeOptions()
+    options.binary_location = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    url = f'https://www.usnews.com/search/education#gsc.tab=0&gsc.q={school_name}%20academics%20majors&gsc.sort='
+    driver.get(url)
+
+    try:
+        elem = WebDriverWait(driver, 40).until(EC.presence_of_element_located((By.TAG_NAME, 'li')))
+        content = driver.find_elements(By.TAG_NAME, 'li')
+        print('Content found')
+    except:
+        print('Website timed out')
+
+    result = ''
+    for c in content:
+        if 'https://www.usnews.com/best-colleges/' in c.text:
+            result = c.text
+            break
+    url = re.findall('https?://\S+', result)[0]
+    headers = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36'}
+    page = requests.get(url, headers=headers)
+    soup = BeautifulSoup(page.text, 'lxml')
+    a = soup.find('h1', class_='Heading-sc-1w5xk2o-0 cSCNqo')
+    text = a.find_next_sibling('p').text
+    
+    majors = text.split('include:')[1].split('. The average')[0].strip().split(';')
+    if majors[-1][:4] == ' and':
+        majors[-1] = majors[-1][4:]
+    majors = [m.strip() for m in majors]
+
+    final_majors = []
+    for major_str in majors:
+        lower = major_str.lower()
+        if 'and related' in lower:
+            i = lower.index('and related')
+            major_str = major_str[:i].strip()
+                
+        if 'and support' in lower:
+            i = lower.index('and support')
+            major_str = major_str[:i].strip()
+            
+        if ',' in major_str and 'and' not in lower and 'studies' not in lower:
+            lst = major_str.split(',')
+            for m in lst:
+                if m and 'and related' not in m.lower():
+                    final_majors.append(m.strip())
+        
+        else:
+            final_majors.append(major_str)
+    
+    r = Rake()
+    major_keywords = []
+    for fm in final_majors:
+        r.extract_keywords_from_text(fm)
+        keywords = r.get_ranked_phrases()
+        words = ['science', 'studies']
+        for w in words:
+            if len(keywords) > 1 and w in keywords[0] and w not in keywords[1:]:
+                for i in range(1, len(keywords)):
+                    keywords[i] = keywords[i] + ' ' + w
+        major_keywords.append(keywords)
+    
+    majors_to_search = set()
+    for mks in major_keywords:
+        for mk in mks:
+            for pm in possible_majors:
+                if similarity(pm, mk) > 0.7:
+                    majors_to_search.add(mk)
+                    
+    return majors_to_search
+
 def gather_university_information(school_name):
+    majors_to_search = find_popular_majors(school_name)
+    print('------majors search finished------')
 
     search_queries = {
-        'academics_overall': ['academics overall'],
-        'academics_business': ['business'],
-        'academics_socialsciencehistory': ['social science and history'],
-        'academics_computerscience': ['computer science'],
-        'academics_engineering': ['engineering'],
-        'academics_biology': ['biology'],
-        'academics_psychology': ['psychology'],
-        'academics_visualperformingarts': ['visual and performing arts'],
-        'academics_communicationjournalism': ['communication and journalism'],
         'alumni': ['notable alumni', 'career outcomes'],
         'campus_general': ['campus information'],
         'campus_famousbuildingslandmarks': ['famous buildings', 'landmarks'],
@@ -110,19 +192,37 @@ def gather_university_information(school_name):
         'studentlife_greeklife': ['greek life']
     }
 
-    result = {}
-    for query_category in query_categories:
+    academics_result = {}
+    for major in majors_to_search:
+        academics_result[major] = []
+        urls = get_urls_and_titles(f'{school_name} {major}')[0]
+        for url in urls:
+            paragraphs = extract_paragraphs(url)
+            if paragraphs:
+                academics_result[major].extend(paragraphs)
+    
+    non_academics_result = {}
+    for query_category in search_queries.keys():
         queries = search_queries[query_category]
+        non_academics_result[query_category] = []
         for q in queries:
             urls = get_urls_and_titles(f'{school_name} {q}')[0]
             for url in urls:
                 paragraphs = extract_paragraphs(url)
                 if paragraphs:
-                    if query_category in result:
-                        result[query_category].extend(paragraphs)
-                    else:
-                        result[query_category] = paragraphs
-    return result
+                    non_academics_result[query_category].extend(paragraphs)
+    
+    with open('academics_result.pkl', 'wb') as f:
+        pickle.dump(academics_result, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('non_academics_result.pkl', 'wb') as f:
+        pickle.dump(non_academics_result, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('majors_to_search.pkl', 'wb') as f:
+        pickle.dump(majors_to_search, f)
+
+    return academics_result, non_academics_result, majors_to_search
+
+
+
 
 
 device = torch.device('cpu')
@@ -224,34 +324,10 @@ def call_wikidata_api(query):
         images = soup.findAll('img')
         logo_image_url = 'https:' + images[0]['src']
         campus_image_url = 'https:' + images[1]['src']
-        map_image_url = 'https:' + images[2]['src']
-
     except:
         logo_image_url = 'not found'
         campus_image_url = 'not found'
-    # try:
-    #     campus_file = data['entities'][id_]['claims']['P18'][0]['mainsnak']['datavalue']['value'].replace(
-    #         ' ', '_')
-    #     temp_url = f'www.wikidata.org/wiki/{id_}#/media/File:{campus_file}'
-    #     page = urllib.request.urlopen('https://' + temp_url)
-    #     soup = BeautifulSoup(page, features='lxml')
-    #     image = soup.findAll('img')[0]
-    #     campus_image_url = 'https:' + image['src']
-    # except:
-    #     campus_image_url = 'not found'
 
-    # result = {
-    #     'wikidata_id': id_,
-    #     'title': title,
-    #     'description': description,
-    #     'alternate_names': alternate_names,
-    #     'twitter': twitter,
-    #     'instagram': instagram,
-    #     'subreddit': subreddit,
-    #     'official_websites': official_websites,
-    #     'logo_image_url': logo_image_url,
-    #     'campus_image_url': campus_image_url
-    # }
 
     alternate_names = ', '.join(alternate_names)
 
